@@ -1,65 +1,278 @@
-<!doctype html>
-<html lang="en-AU">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="robots" content="noindex, nofollow">
-  <meta name="theme-color" content="#0b0b0c">
-  <title>Your Coach · Atlas Strength Club</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="icon" type="image/x-icon" href="logo-white-icon.png">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
-</head>
-<body>
+:root {
+  --bg: #0b0b0c;
+  --surface: #141416;
+  --line: #2a2a2e;
+  --text: #f2f0ea;
+  --muted: #8f8b83;
+  --gold: #c9a24a;
+  --gold-hover: #d9b45c;
+  --danger: #e0705a;
+  --radius: 10px;
+  --nav-h: 68px;
+  --font-head: "Montserrat", "Arial", sans-serif;
+  --font-body: "Poppins", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
 
-  <!-- Access gate -->
-  <main id="gate" class="gate">
-    <div class="gate__card">
-      <div class="brand">
-        <!-- Swap this block for <img src="logo.svg" alt="Atlas Strength Club"> if you have a logo file -->
-        <span class="brand__mark">ATLAS</span>
-        <span class="brand__sub">Strength Club</span>
-      </div>
+*, *::before, *::after { box-sizing: border-box; }
 
-      <h1 class="gate__title">Your Coach</h1>
-      <p class="gate__lede">Enter your access code to get started.</p>
+html, body {
+  margin: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
 
-      <form id="gate-form" autocomplete="off" novalidate>
-        <label for="code" class="sr-only">Access code</label>
-        <input id="code" name="code" type="text" autocapitalize="characters"
-               spellcheck="false" placeholder="ATLAS-XXXX-XXXX-XXXX" required>
+[hidden] { display: none !important; }
 
-        <label class="remember">
-          <input type="checkbox" id="remember" checked>
-          <span>Keep me signed in on this device</span>
-        </label>
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
 
-        <button type="submit" id="enter" class="btn">Enter</button>
-        <p id="gate-msg" class="msg" role="status" aria-live="polite"></p>
-      </form>
+/* ---------- Brand (gate) ---------- */
+.brand { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.brand__mark {
+  font-family: var(--font-head);
+  font-weight: 900;
+  font-size: 2.4rem;
+  letter-spacing: 0.2em;
+  line-height: 1;
+  color: var(--text);
+  padding-left: 0.2em; /* optically centre the tracking */
+}
+.brand__sub {
+  font-family: var(--font-head);
+  font-weight: 600;
+  font-size: 0.72rem;
+  letter-spacing: 0.42em;
+  text-transform: uppercase;
+  color: var(--gold);
+  padding-left: 0.42em;
+}
 
-      <p class="gate__help">Lost your code? Ask the team at the gym.</p>
-    </div>
-  </main>
+/* ---------- Gate ---------- */
+.gate {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 24px 16px;
+  background:
+    radial-gradient(ellipse at 50% -10%, rgba(201, 162, 74, 0.10), transparent 60%),
+    var(--bg);
+}
 
-  <!-- Coach chat -->
-  <section id="coach" class="coach" hidden>
-    <header class="bar">
-      <div class="brand brand--sm">
-        <span class="brand__mark">ATLAS</span>
-      </div>
-      <span id="greeting" class="bar__hello"></span>
-      <button id="logout" class="bar__logout" type="button">Log out</button>
-    </header>
+.gate__card { width: 100%; max-width: 400px; text-align: center; }
 
-    <div class="frame-wrap">
-      <p class="frame-wrap__loading">Loading your coach…</p>
-      <iframe id="coach-frame" title="Your Atlas coach" allow="clipboard-write"></iframe>
-    </div>
-  </section>
+.gate__logo {
+  display: block;
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 20px;
+  object-fit: contain;
+}
 
-  <script src="app.js" defer></script>
-</body>
-</html>
+.gate__title {
+  font-family: var(--font-head);
+  font-weight: 800;
+  font-size: 1.6rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin: 40px 0 6px;
+}
+
+.gate__lede { color: var(--muted); margin: 0 0 28px; font-weight: 300; }
+
+#gate-form { display: flex; flex-direction: column; gap: 14px; }
+
+#code {
+  width: 100%;
+  padding: 15px 16px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-family: var(--font-head);
+  font-weight: 600;
+  font-size: 1.05rem;
+  letter-spacing: 0.12em;
+  text-align: center;
+  text-transform: uppercase;
+  outline: none;
+  transition: border-color 0.15s;
+}
+#code::placeholder { color: #4a4844; }
+#code:focus { border-color: var(--gold); }
+#code[aria-invalid="true"] { border-color: var(--danger); }
+
+.remember {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: var(--muted);
+  cursor: pointer;
+}
+.remember input { accent-color: var(--gold); width: 16px; height: 16px; }
+
+.btn {
+  width: 100%;
+  padding: 15px;
+  border: 0;
+  border-radius: var(--radius);
+  background: var(--gold);
+  color: #111;
+  font-family: var(--font-head);
+  font-weight: 800;
+  font-size: 0.9rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.15s, opacity 0.15s, transform 0.15s;
+}
+.btn:hover { background: var(--gold-hover); transform: translateY(-1px); }
+.btn:disabled { opacity: 0.6; cursor: wait; transform: none; }
+
+.msg { min-height: 1.5em; margin: 0; font-size: 0.9rem; color: var(--danger); }
+.msg--ok { color: var(--muted); }
+
+.gate__help { margin-top: 32px; font-size: 0.82rem; color: var(--muted); font-weight: 300; }
+
+/* ---------- Coach screen ---------- */
+.coach {
+  height: 100vh;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header – matches main site nav */
+.nav {
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: rgba(11, 11, 12, 0.85);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  padding-top: env(safe-area-inset-top);
+}
+
+.nav__inner {
+  height: var(--nav-h);
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.nav__brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.nav__logo {
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.nav__name {
+  font-family: var(--font-head);
+  font-weight: 800;
+  font-size: 0.95rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--text);
+}
+.nav__name span { color: var(--gold); font-weight: 600; }
+
+.nav__right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-shrink: 0;
+}
+
+.nav__hello {
+  font-size: 0.85rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.nav__logout {
+  background: transparent;
+  border: 1px solid rgba(201, 162, 74, 0.5);
+  border-radius: 999px;
+  color: var(--gold);
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 9px 18px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+.nav__logout:hover {
+  background: var(--gold);
+  border-color: var(--gold);
+  color: #111;
+}
+
+/* Small phones: keep it to icon + ATLAS + Log out */
+@media (max-width: 520px) {
+  .nav__hello { display: none; }
+  .nav__name span { display: none; }
+}
+@media (max-width: 360px) {
+  .nav__name { letter-spacing: 0.1em; }
+  .nav__logout { padding: 8px 14px; }
+}
+
+.frame-wrap {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  max-width: 820px;
+  margin: 0 auto;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.frame-wrap__loading {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+#coach-frame {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: transparent;
+}
+
+@media (min-width: 820px) {
+  .frame-wrap { padding: 16px 0; }
+  #coach-frame { border: 1px solid var(--line); border-radius: var(--radius); }
+}
