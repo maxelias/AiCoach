@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Coach Admin · Atlas</title>
+  <style>
+    :root { --bg:#0b0b0c; --surface:#141416; --line:#2a2a2e; --text:#f2f0ea; --muted:#8f8b83; --gold:#c9a24a; --danger:#e0705a; }
+    * { box-sizing: border-box; }
+    body { margin:0; background:var(--bg); color:var(--text); font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif; }
+    main { max-width:760px; margin:0 auto; padding:32px 16px 64px; }
+    h1 { font-size:1.4rem; margin:0 0 4px; letter-spacing:.04em; }
+    h2 { font-size:1.05rem; margin:0 0 12px; color:var(--gold); }
+    p.note { color:var(--muted); margin:0 0 28px; }
+    section { background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:20px; margin-bottom:20px; }
+    label { display:block; font-size:.85rem; color:var(--muted); margin:12px 0 4px; }
+    input, textarea { width:100%; background:var(--bg); border:1px solid var(--line); border-radius:8px; color:var(--text); padding:10px 12px; font:inherit; }
+    textarea { font-family:ui-monospace,Menlo,Consolas,monospace; font-size:.8rem; min-height:140px; resize:vertical; }
+    .row { display:flex; gap:8px; }
+    .row input { flex:1; }
+    button { background:var(--gold); color:#111; border:0; border-radius:8px; padding:10px 16px; font:600 .9rem system-ui,sans-serif; cursor:pointer; margin-top:14px; }
+    button.ghost { background:transparent; color:var(--text); border:1px solid var(--line); margin-top:0; }
+    button.danger { background:var(--danger); }
+    .out { margin-top:16px; }
+    .code-big { font:600 1.3rem ui-monospace,Menlo,monospace; letter-spacing:.08em; color:var(--gold); }
+    .err { color:var(--danger); }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Coach Admin</h1>
+  <p class="note">Runs entirely in your browser. Nothing is sent anywhere. After each change, copy the output into <code>my-coach/clients.json</code> and push to GitHub.</p>
+
+  <section>
+    <h2>1. Current clients.json</h2>
+    <label for="current">Paste the current contents (leave blank if this is your first client)</label>
+    <textarea id="current" placeholder='{ "version": 1, "clients": {} }'></textarea>
+  </section>
+
+  <section>
+    <h2>2. Add a client</h2>
+    <label for="name">Client name</label>
+    <input id="name" placeholder="e.g. Sam Nguyen">
+    <label for="agent">Chatbase agent ID</label>
+    <input id="agent" placeholder="From Chatbase → Deploy → Embed (the ID in the iframe URL)">
+    <label for="newcode">Access code</label>
+    <div class="row">
+      <input id="newcode" placeholder="Click Generate">
+      <button class="ghost" id="gen" type="button">Generate</button>
+    </div>
+    <button id="add" type="button">Add client</button>
+    <div class="out" id="add-out"></div>
+  </section>
+
+  <section>
+    <h2>3. Remove a client</h2>
+    <label for="rmcode">Their access code</label>
+    <input id="rmcode" placeholder="ATLAS-XXXX-XXXX-XXXX">
+    <button class="danger" id="rm" type="button">Remove client</button>
+    <div class="out" id="rm-out"></div>
+  </section>
+
+  <section>
+    <h2>4. Updated clients.json</h2>
+    <textarea id="result" readonly placeholder="Output appears here"></textarea>
+    <button class="ghost" id="copy" type="button" style="margin-top:12px">Copy</button>
+  </section>
+</main>
+
+<script>
+/* Must match my-coach/app.js exactly */
+const APP_SALT = "atlas-strength-club/my-coach/v1";
+const ITERATIONS = 250000;
+const ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"; // no 0/O, 1/I/L
+
+const $ = (id) => document.getElementById(id);
+const toB64 = (b) => btoa(String.fromCharCode(...b));
+const toHex = (b) => Array.from(b, (x) => x.toString(16).padStart(2, "0")).join("");
+
+function normaliseCode(raw) {
+  let c = String(raw || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+  if (c.startsWith("ATLAS")) c = c.slice(5);
+  return c;
+}
+
+function generateCode() {
+  const bytes = crypto.getRandomValues(new Uint8Array(12));
+  const chars = Array.from(bytes, (b) => ALPHABET[b % ALPHABET.length]).join("");
+  return `ATLAS-${chars.slice(0, 4)}-${chars.slice(4, 8)}-${chars.slice(8, 12)}`;
+}
+
+async function deriveKeys(code) {
+  const enc = new TextEncoder();
+  const base = await crypto.subtle.importKey("raw", enc.encode(code), "PBKDF2", false, ["deriveBits"]);
+  const bits = new Uint8Array(await crypto.subtle.deriveBits(
+    { name: "PBKDF2", hash: "SHA-256", salt: enc.encode(APP_SALT), iterations: ITERATIONS }, base, 512));
+  const aesKey = await crypto.subtle.importKey("raw", bits.slice(0, 32), "AES-GCM", false, ["encrypt"]);
+  return { aesKey, lookup: toHex(bits.slice(32, 48)) };
+}
+
+function readCurrent() {
+  const raw = $("current").value.trim();
+  if (!raw) return { version: 1, clients: {} };
+  const data = JSON.parse(raw);
+  data.clients = data.clients || {};
+  return data;
+}
+
+function writeResult(data) {
+  const json = JSON.stringify(data, null, 2);
+  $("result").value = json;
+  $("current").value = json; // so you can add several in a row
+}
+
+$("gen").onclick = () => { $("newcode").value = generateCode(); };
+
+$("add").onclick = async () => {
+  const out = $("add-out");
+  out.innerHTML = "";
+  try {
+    const name = $("name").value.trim();
+    const agentId = $("agent").value.trim();
+    const display = $("newcode").value.trim() || generateCode();
+    const code = normaliseCode(display);
+    if (!name || !agentId) throw new Error("Name and agent ID are both required.");
+    if (code.length < 12) throw new Error("Code is too short. Use Generate.");
+
+    const data = readCurrent();
+    const { aesKey, lookup } = await deriveKeys(code);
+    if (data.clients[lookup]) throw new Error("That code is already in use.");
+
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const payload = new TextEncoder().encode(JSON.stringify({ name, agentId }));
+    const enc = new Uint8Array(await crypto.subtle.encrypt({ name: "AES-GCM", iv }, aesKey, payload));
+    data.clients[lookup] = { iv: toB64(iv), data: toB64(enc) };
+    writeResult(data);
+
+    out.innerHTML = `<p>Added <strong>${name.replace(/</g, "&lt;")}</strong>. Give them this code and record it in your spreadsheet:</p>
+      <p class="code-big">${display.toUpperCase()}</p>`;
+    $("name").value = ""; $("agent").value = ""; $("newcode").value = "";
+  } catch (e) {
+    out.innerHTML = `<p class="err">${e.message}</p>`;
+  }
+};
+
+$("rm").onclick = async () => {
+  const out = $("rm-out");
+  out.innerHTML = "";
+  try {
+    const code = normaliseCode($("rmcode").value);
+    if (!code) throw new Error("Enter the code to remove.");
+    const data = readCurrent();
+    const { lookup } = await deriveKeys(code);
+    if (!data.clients[lookup]) throw new Error("No client found with that code.");
+    delete data.clients[lookup];
+    writeResult(data);
+    out.innerHTML = `<p>Removed. Paste the updated file into GitHub, then pause or delete their Chatbase agent.</p>`;
+    $("rmcode").value = "";
+  } catch (e) {
+    out.innerHTML = `<p class="err">${e.message}</p>`;
+  }
+};
+
+$("copy").onclick = async () => {
+  try { await navigator.clipboard.writeText($("result").value); $("copy").textContent = "Copied"; }
+  catch { $("result").select(); }
+  setTimeout(() => ($("copy").textContent = "Copy"), 1500);
+};
+</script>
+</body>
+</html>

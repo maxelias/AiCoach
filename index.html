@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#0b0b0c">
+  <title>Your Coach · Atlas Strength Club</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Access gate -->
+  <main id="gate" class="gate">
+    <div class="gate__card">
+      <div class="brand">
+        <!-- Swap this block for <img src="logo.svg" alt="Atlas Strength Club"> if you have a logo file -->
+        <span class="brand__mark">ATLAS</span>
+        <span class="brand__sub">Strength Club</span>
+      </div>
+
+      <h1 class="gate__title">Your Coach</h1>
+      <p class="gate__lede">Enter your access code to get started.</p>
+
+      <form id="gate-form" autocomplete="off" novalidate>
+        <label for="code" class="sr-only">Access code</label>
+        <input id="code" name="code" type="text" autocapitalize="characters"
+               spellcheck="false" placeholder="ATLAS-XXXX-XXXX-XXXX" required>
+
+        <label class="remember">
+          <input type="checkbox" id="remember" checked>
+          <span>Keep me signed in on this device</span>
+        </label>
+
+        <button type="submit" id="enter" class="btn">Enter</button>
+        <p id="gate-msg" class="msg" role="status" aria-live="polite"></p>
+      </form>
+
+      <p class="gate__help">Lost your code? Ask the team at the gym.</p>
+    </div>
+  </main>
+
+  <!-- Coach chat -->
+  <section id="coach" class="coach" hidden>
+    <header class="bar">
+      <div class="brand brand--sm">
+        <span class="brand__mark">ATLAS</span>
+      </div>
+      <span id="greeting" class="bar__hello"></span>
+      <button id="logout" class="bar__logout" type="button">Log out</button>
+    </header>
+
+    <div class="frame-wrap">
+      <p class="frame-wrap__loading">Loading your coach…</p>
+      <iframe id="coach-frame" title="Your Atlas coach" allow="clipboard-write"></iframe>
+    </div>
+  </section>
+
+  <script src="app.js" defer></script>
+</body>
+</html>
