@@ -40,9 +40,7 @@ html, body {
   display: grid;
   place-items: center;
   padding: clamp(24px, 6vh, 64px) 20px;
-  background:
-    radial-gradient(ellipse at 50% -10%, rgba(201, 162, 74, 0.08), transparent 60%),
-    var(--bg);
+  background: #000;
 }
 
 .gate__card {
