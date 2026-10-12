@@ -86,7 +86,7 @@ async function unlock(code) {
 
 function showCoach(client) {
   const first = (client.name || "").trim().split(/\s+/)[0];
-  greeting.textContent = first ? `Hi, ${first}` : "";
+  if (greeting) greeting.textContent = first ? `Hi, ${first}` : "";
   frame.src = CHATBASE_IFRAME + encodeURIComponent(client.agentId);
   gate.hidden = true;
   coach.hidden = false;
